@@ -3,6 +3,7 @@
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
+
 trigger:
 - master
 
@@ -18,21 +19,21 @@ stages:
       solution: '**/*.sln'
       buildPlatform: 'Any CPU'
       buildConfiguration: 'Release'
-    
+     
     steps:
-    - task: NuGetToolInstaller@1
-    
-    - task: NuGetCommand@2
+    - task: DotNetCoreCLI@2
+      displayName: Restore
       inputs:
-        restoreSolution: '$(solution)'
+        command: restore
+        projects: '**/*.csproj'
     
-    - task: VSBuild@1
+    - task: DotNetCoreCLI@2
+      displayName: Build
       inputs:
-        solution: '$(solution)'
-        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-        platform: '$(buildPlatform)'
-        configuration: '$(buildConfiguration)'
-    
+        command: build
+        projects: '**/*.csproj'
+        arguments: '--configuration $(buildConfiguration)' # Update this to match your need
+
 - stage: Test
   jobs:
   - job: Test
@@ -45,12 +46,15 @@ stages:
       buildConfiguration: 'Release'
     
     steps:
-    - task: VSTest@2
+    - task: DotNetCoreCLI@2
+      displayName: Test
       inputs:
-        platform: '$(buildPlatform)'
-        configuration: '$(buildConfiguration)'
+        command: test
+        projects: '$(Parameters.UnitTestProjects)'
+        arguments: '--configuration $(BuildConfiguration)'
+    
 
-- stage: Publish_Artifact
+- stage: Publish
   jobs:
   - job: Publish
     pool:
@@ -62,55 +66,38 @@ stages:
       buildConfiguration: 'Release'
 
     steps:
+    - task: DotNetCoreCLI@2
+      displayName: Publish
+      inputs:
+        command: publish
+        publishWebProjects: True
+        arguments: '--configuration $(BuildConfiguration) --output "$(build.artifactstagingdirectory)"'
+        zipAfterPublish: True
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish functional tests'
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: '**/*FunctionalTest*.csproj'
+        arguments: '--configuration $(BuildConfiguration) --output "$(build.artifactstagingdirectory)/FunctionalTests"'
+        zipAfterPublish: false
+        modifyOutputPath: false
+
+    - task: CopyFiles@2
+      displayName: 'Copy runsettings file'
+      inputs:
+        Contents: '**/*.runsettings'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/FunctionalTests'
+        flattenFolders: true
+
+    - task: CopyFiles@2
+      displayName: 'Copy ARM templates'
+      inputs:
+        SourceFolder: ArmTemplates
+        TargetFolder: '$(build.artifactstagingdirectory)'
+
     - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'drop'
-        publishLocation: 'Container'
-
-- stage: Deploy_Dev
-  jobs:
-  - deployment: Deploy
-    pool:
-      vmImage: 'windows-latest'
-    
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-
-    steps:
-    - task: AzureResourceGroupDeployment@2
-      displayName: 'Azure Deployment:Create Azure App Service'
-      inputs:
-        azureSubscription: 'FastCarzMaerskJ - Azure'
-        resourceGroupName: 'FastCarzMaerskJ-rg'
-        location: 'South Central US'
-        csmFile: '$(System.DefaultWorkingDirectory)/**/windows-webapp-template.json'
-        overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
-    - task: AzureRmWebAppDeployment@3
-      displayName: 'Deploy Azure App Service'
-      inputs:
-        azureSubscription: 'FastCarzMaerskJ - Azure'
-        WebAppName: FastCarzMaerskJ
-        Package: '$(System.DefaultWorkingDirectory)\**\*.zip'
-        WebAppUri: webAppUrl
-        TakeAppOfflineFlag: true
-        UseWebDeploy: true
-        RenameFilesFlag: true
-      
-    - task: VisualStudioTestPlatformInstaller@1
-      displayName: 'Visual Studio Test Platform Installer'
-
-    - task: VSTest@2
-      displayName: 'Test Assemblies'
-      inputs:
-        testAssemblyVer2: |
-         **\*FunctionalTest*.dll
-         !**\*TestAdapter.dll
-         !**\obj\**
-        vsTestVersion: toolsInstaller
-        runSettingsFile: '$(System.DefaultWorkingDirectory)/Drop/drop/FunctionalTests/functionalTests.runsettings'
-        overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
-        platform: '$(BuildPlatform)'
-        configuration: '$(BuildConfiguration)'
+        PathtoPublish: '$(build.artifactstagingdirectory)'
