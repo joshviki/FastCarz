@@ -1,0 +1,73 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+- master
+
+pool:
+  name: 'Azure Pipelines' 
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: restore
+    projects: '$(Parameters.RestoreBuildProjects)'
+    vstsFeed: 'c8c138a5-a62f-4f14-a07b-2131ad564f32'
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    projects: '$(Parameters.RestoreBuildProjects)'
+    arguments: '$(Parameters.arguments)'
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    command: test
+    projects: '$(Parameters.UnitTestProjects)'
+    arguments: '$(Parameters.arguments)'
+
+- task: DotNetCoreCLI@2
+  displayName: Publish
+  inputs:
+    command: publish
+    publishWebProjects: True
+    arguments: '$(Parameters.arguments)'
+    zipAfterPublish: True
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish functional tests'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: '**/*FunctionalTest*.csproj'
+    arguments: '$(Parameters.arguments)'
+    zipAfterPublish: false
+    modifyOutputPath: false
+
+- task: CopyFiles@2
+  displayName: 'Copy runsettings file'
+  inputs:
+    Contents: '**/*.runsettings'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/FunctionalTests'
+    flattenFolders: true
+
+- task: CopyFiles@2
+  displayName: 'Copy ARM templates'
+  inputs:
+    SourceFolder: ArmTemplates
+    TargetFolder: '$(build.artifactstagingdirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
