@@ -49,3 +49,14 @@ stages:
       inputs:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
+
+- stage: Publish Artifact
+  jobs:
+    - job: Publish
+      pool:
+        vmImage: 'windows-latest'
+    
+      variables:
+        solution: '**/*.sln'
+        buildPlatform: 'Any CPU'
+        buildConfiguration: 'Release'
