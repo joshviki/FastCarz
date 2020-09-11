@@ -121,7 +121,7 @@ stages:
               azureSubscription: 'FastCarzMaerskJ - Azure'
               resourceGroupName: 'FastCarzMaerskJ-rg'
               location: 'South Central US'
-              csmFile: '$(System.DefaultWorkingDirectory)/**/windows-webapp-template.json'
+              csmFile: '$(System.DefaultWorkingDirectory)/Drop/drop/windows-webapp-template.json'
               overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
       
           - task: AzureRmWebAppDeployment@3
@@ -129,7 +129,7 @@ stages:
             inputs:
               azureSubscription: 'FastCarzMaerskJ - Azure'
               WebAppName: FastCarzMaerskJ
-              Package: '$(System.DefaultWorkingDirectory)\**\*.zip'
+              Package: '$(System.DefaultWorkingDirectory)\Drop/drop\*.zip'
               WebAppUri: webAppUrl
               TakeAppOfflineFlag: true
               UseWebDeploy: true
