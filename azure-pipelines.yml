@@ -50,13 +50,21 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
 
-- stage: Publish Artifact
+- stage: Publish_Artifact
   jobs:
-    - job: Publish
-      pool:
-        vmImage: 'windows-latest'
+  - job: Publish
+    pool:
+      vmImage: 'windows-latest'
     
-      variables:
-        solution: '**/*.sln'
-        buildPlatform: 'Any CPU'
-        buildConfiguration: 'Release'
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+
+    steps:
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
