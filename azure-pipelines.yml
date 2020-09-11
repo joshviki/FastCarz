@@ -5,8 +5,10 @@
 
 
 trigger:
-- master
-
+  branches:
+    include:
+    - master
+    
 stages:
 - stage: Build
   jobs:
@@ -101,3 +103,48 @@ stages:
       displayName: 'Publish Artifact'
       inputs:
         PathtoPublish: '$(build.artifactstagingdirectory)'
+
+- stage: Deploy_Dev
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    environment: dev
+    pool:
+      vmImage: 'windows-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:           
+          - task: AzureResourceGroupDeployment@2
+            displayName: 'Azure Deployment:Create Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              resourceGroupName: 'FastCarzMaerskJ-rg'
+              location: 'South Central US'
+              csmFile: '$(System.DefaultWorkingDirectory)/**/windows-webapp-template.json'
+              overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
+      
+          - task: AzureRmWebAppDeployment@3
+            displayName: 'Deploy Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              WebAppName: FastCarzMaerskJ
+              Package: '$(System.DefaultWorkingDirectory)\**\*.zip'
+              WebAppUri: webAppUrl
+              TakeAppOfflineFlag: true
+              UseWebDeploy: true
+              RenameFilesFlag: true
+
+          - task: VSTest@2
+            displayName: 'Test Assemblies'
+            inputs:
+              testAssemblyVer2: |
+               **\*FunctionalTest*.dll
+               !**\*TestAdapter.dll
+               !**\obj\**
+              vsTestVersion: toolsInstaller
+              runSettingsFile: '$(System.DefaultWorkingDirectory)/Drop/drop/FunctionalTests/functionalTests.runsettings'
+              overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
+              platform: '$(BuildPlatform)'
+              configuration: '$(BuildConfiguration)'
+      
