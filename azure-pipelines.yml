@@ -31,14 +31,5 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: CmdLine@2
-            displayName: 'Pre Checking directories'
-            inputs:
-              script: dir 
-              workingDirectory: $(Pipeline.Workspace)
-              script: dir 
-              workingDirectory: $(Agent.BuildDirectory)
-              script: dir 
-              workingDirectory: $(System.ArtifactsDirectory)
-              script: dir 
-              workingDirectory: $(build.artifactstagingdirectory)
+          - script: dir 
+            workingDirectory: $(Pipeline.Workspace)
