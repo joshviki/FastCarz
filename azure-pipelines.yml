@@ -10,6 +10,26 @@ trigger:
     - master
     
 stages:
+
+- stage: Test
+  jobs:
+  - job: Test
+    pool:
+      vmImage: 'windows-latest'
+    
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Test
+      inputs:
+        command: test
+        projects: '$(Parameters.UnitTestProjects)'
+        arguments: '--configuration $(BuildConfiguration)'
+
 - stage: Build
   jobs:
   - job: Build
@@ -36,24 +56,6 @@ stages:
         projects: '**/*.csproj'
         arguments: '--configuration $(buildConfiguration)' # Update this to match your need
 
-- stage: Test
-  jobs:
-  - job: Test
-    pool:
-      vmImage: 'windows-latest'
-    
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-    
-    steps:
-    - task: DotNetCoreCLI@2
-      displayName: Test
-      inputs:
-        command: test
-        projects: '$(Parameters.UnitTestProjects)'
-        arguments: '--configuration $(BuildConfiguration)'
     
 
 - stage: Publish
