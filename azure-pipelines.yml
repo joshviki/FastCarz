@@ -31,7 +31,7 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: Bash@3
+          - task: CmdLine@2
             displayName: 'Pre Checking directories'
             inputs:
               script: dir 
