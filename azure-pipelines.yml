@@ -168,7 +168,7 @@ stages:
 
 - stage: Deploy_QA
   displayName: Deploy To QA
-  dependsOn: Deploy_Dev
+  dependsOn: Publish
 
   jobs:
   - deployment: Deploy
@@ -226,7 +226,7 @@ stages:
 
 - stage: Deploy_PROD
   displayName: Deploy To PROD
-  dependsOn: Deploy_QA
+  dependsOn: Publish
 
   jobs:
   - deployment: Deploy
