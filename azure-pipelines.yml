@@ -119,7 +119,7 @@ stages:
     strategy:
       runOnce:
         deploy:
-		      steps:
+          steps:
           - task: AzureResourceGroupDeployment@2
             displayName: 'Azure Deployment:Create Azure App Service'
             inputs:
