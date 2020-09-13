@@ -34,4 +34,4 @@ stages:
           - task: Bash@3
             displayName: 'Pre Checking directories'
             inputs:
-              script: echo $(System.DefaultWorkingDirectory)
+              script: echo $(Pipeline.Workspace)
