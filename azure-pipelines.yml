@@ -34,4 +34,11 @@ stages:
           - task: Bash@3
             displayName: 'Pre Checking directories'
             inputs:
-              script: echo $(Pipeline.Workspace)
+              script: dir 
+              workingDirectory: $(Pipeline.Workspace)
+              script: dir 
+              workingDirectory: $(Agent.BuildDirectory)
+              script: dir 
+              workingDirectory: $(System.ArtifactsDirectory)
+              script: dir 
+              workingDirectory: $(build.artifactstagingdirectory)
