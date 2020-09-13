@@ -165,7 +165,7 @@ stages:
               overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
               platform: '$(BuildPlatform)'
               configuration: '$(BuildConfiguration)'
-			
+
 - stage: Deploy_QA
   displayName: Deploy To QA
   dependsOn: Publish
