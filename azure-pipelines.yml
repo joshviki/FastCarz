@@ -113,45 +113,21 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
+    
     pool:
       vmImage: 'windows-latest'
+      
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    
     environment: 'DEV'
     strategy:
       runOnce:
         deploy:
           steps:
-          - task: AzureResourceGroupDeployment@2
-            displayName: 'Azure Deployment:Create Azure App Service'
+          - task: Bash@3
+            displayName: 'Pre Checking directories'
             inputs:
-              azureSubscription: 'FastCarzMaerskJ - Azure'
-              resourceGroupName: 'FastCarzMaerskJ-rg'
-              location: 'South Central US'
-              csmFile: '$(build.artifactstagingdirectory)/**/windows-webapp-template.json'
-              overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
-
-          - task: AzureRmWebAppDeployment@3
-            displayName: 'Deploy Azure App Service'
-            inputs:
-              azureSubscription: 'FastCarzMaerskJ - Azure'
-              WebAppName: FastCarzMaerskJ
-              Package: '$(build.artifactstagingdirectory)\**\*.zip'
-              WebAppUri: webAppUrl
-              TakeAppOfflineFlag: true
-              UseWebDeploy: true
-              RenameFilesFlag: true
-          
-          - task: VisualStudioTestPlatformInstaller@1
-            displayName: 'Visual Studio Test Platform Installer'
-
-          - task: VSTest@2
-            displayName: 'Test Assemblies'
-            inputs:
-              testAssemblyVer2: |
-               **\*FunctionalTest*.dll
-               !**\*TestAdapter.dll
-               !**\obj\**
-              vsTestVersion: toolsInstaller
-              runSettingsFile: '$(build.artifactstagingdirectory)/_FastCarzMaerskJ/drop/FunctionalTests/functionalTests.runsettings'
-              overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
-              platform: '$(BuildPlatform)'
-              configuration: '$(BuildConfiguration)'
+              script: echo $(build.artifactstagingdirectory)
