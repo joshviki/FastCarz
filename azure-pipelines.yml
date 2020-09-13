@@ -109,7 +109,7 @@ stages:
         PathtoPublish: '$(build.artifactstagingdirectory)'
 
 - stage: Deploy_Dev
-  displayName: Deploy stage
+  displayName: Deploy To Dev
   dependsOn: Publish
 
   jobs:
@@ -125,6 +125,122 @@ stages:
       buildConfiguration: 'Release'
     
     environment: 'DEV'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: AzureResourceGroupDeployment@2
+            displayName: 'Azure Deployment:Create Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              resourceGroupName: 'FastCarzMaerskJ-rg'
+              location: 'South Central US'
+              csmFile: '$(Pipeline.Workspace)/**/windows-webapp-template.json'
+              overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
+
+          - task: AzureRmWebAppDeployment@3
+            displayName: 'Deploy Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              WebAppName: FastCarzMaerskJ
+              Package: '$(Pipeline.Workspace)\**\*.zip'
+              WebAppUri: webAppUrl
+              TakeAppOfflineFlag: true
+              UseWebDeploy: true
+              RenameFilesFlag: true
+          
+          - task: VisualStudioTestPlatformInstaller@1
+            displayName: 'Visual Studio Test Platform Installer'
+
+          - task: VSTest@2
+            displayName: 'Test Assemblies'
+            inputs:
+              testAssemblyVer2: |
+               **\*FunctionalTest*.dll
+               !**\*TestAdapter.dll
+               !**\obj\**
+              vsTestVersion: toolsInstaller
+              runSettingsFile: '$(Pipeline.Workspace)/_FastCarzMaerskJ/drop/FunctionalTests/functionalTests.runsettings'
+              overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
+              platform: '$(BuildPlatform)'
+              configuration: '$(BuildConfiguration)'
+			
+- stage: Deploy_QA
+  displayName: Deploy To QA
+  dependsOn: Publish
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    
+    pool:
+      vmImage: 'windows-latest'
+      
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    
+    environment: 'QA'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: AzureResourceGroupDeployment@2
+            displayName: 'Azure Deployment:Create Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              resourceGroupName: 'FastCarzMaerskJ-rg'
+              location: 'South Central US'
+              csmFile: '$(Pipeline.Workspace)/**/windows-webapp-template.json'
+              overrideParameters: '-webAppName FastCarzMaerskJ -hostingPlanName FastCarzMaerskJ-plan -appInsightsLocation "South Central US" -sku "S1 Standard"'
+
+          - task: AzureRmWebAppDeployment@3
+            displayName: 'Deploy Azure App Service'
+            inputs:
+              azureSubscription: 'FastCarzMaerskJ - Azure'
+              WebAppName: FastCarzMaerskJ
+              Package: '$(Pipeline.Workspace)\**\*.zip'
+              WebAppUri: webAppUrl
+              TakeAppOfflineFlag: true
+              UseWebDeploy: true
+              RenameFilesFlag: true
+          
+          - task: VisualStudioTestPlatformInstaller@1
+            displayName: 'Visual Studio Test Platform Installer'
+
+          - task: VSTest@2
+            displayName: 'Test Assemblies'
+            inputs:
+              testAssemblyVer2: |
+               **\*FunctionalTest*.dll
+               !**\*TestAdapter.dll
+               !**\obj\**
+              vsTestVersion: toolsInstaller
+              runSettingsFile: '$(Pipeline.Workspace)/_FastCarzMaerskJ/drop/FunctionalTests/functionalTests.runsettings'
+              overrideTestrunParameters: '-webAppUrl $(webAppUrl)'
+              platform: '$(BuildPlatform)'
+              configuration: '$(BuildConfiguration)'
+
+- stage: Deploy_PROD
+  displayName: Deploy To PROD
+  dependsOn: Publish
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    
+    pool:
+      vmImage: 'windows-latest'
+      
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+    
+    environment: 'PROD'
     strategy:
       runOnce:
         deploy:
