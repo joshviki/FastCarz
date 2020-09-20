@@ -8,19 +8,20 @@ trigger:
   branches:
     include:
     - master
+
+pool:
+  vmImage: 'windows-latest'
+    
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
     
 stages:
 
 - stage: Test
   jobs:
   - job: Test
-    pool:
-      vmImage: 'windows-latest'
-    
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
     
     steps:
     - task: DotNetCoreCLI@2
@@ -34,15 +35,7 @@ stages:
   dependsOn: Test
   jobs:
   - job: Build
-
-    pool:
-      vmImage: 'windows-latest'
-    
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-     
+  
     steps:
     - task: DotNetCoreCLI@2
       displayName: Restore
@@ -63,14 +56,7 @@ stages:
   dependsOn: Build
   jobs:
   - job: Publish
-    pool:
-      vmImage: 'windows-latest'
     
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-
     steps:
     - task: DotNetCoreCLI@2
       displayName: Publish
@@ -115,15 +101,7 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    
-    pool:
-      vmImage: 'windows-latest'
-      
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-    
+     
     environment: 'DEV'
     strategy:
       runOnce:
@@ -173,15 +151,7 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    
-    pool:
-      vmImage: 'windows-latest'
-      
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-    
+     
     environment: 'QA'
     strategy:
       runOnce:
@@ -231,15 +201,7 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    
-    pool:
-      vmImage: 'windows-latest'
-      
-    variables:
-      solution: '**/*.sln'
-      buildPlatform: 'Any CPU'
-      buildConfiguration: 'Release'
-    
+        
     environment: 'PROD'
     strategy:
       runOnce:
